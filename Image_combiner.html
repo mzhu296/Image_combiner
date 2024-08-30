@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Combiner</title>
+    <style>
+        #canvas {
+            display: none;
+        }
+        #downloadLink {
+            display: none;
+            margin-top: 10px;
+        }
+        #preview {
+            display: block;
+            margin-top: 20px;
+            max-width: 100%;
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Combine Two Pictures</h1>
+    <input type="file" id="file1" accept="image/*">
+    <input type="file" id="file2" accept="image/*">
+
+    <div>
+        <input type="radio" id="vertical" name="orientation" value="vertical" checked>
+        <label for="vertical">Vertical</label>
+        <input type="radio" id="horizontal" name="orientation" value="horizontal">
+        <label for="horizontal">Horizontal</label>
+    </div>
+
+    <div>
+        <label for="alignment">Alignment:</label>
+        <select id="alignment">
+            <option value="start">Start</option>
+            <option value="center">Center</option>
+            <option value="end">End</option>
+        </select>
+    </div>
+
+    <div>
+        <label for="textColor">Text Color:</label>
+        <input type="color" id="textColor" value="#000000">
+
+        <label for="fontFamily">Font Family:</label>
+        <select id="fontFamily">
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Courier New">Courier New</option>
+        </select>
+
+        <label for="fontSize">Font Size:</label>
+        <input type="number" id="fontSize" value="20" min="10" max="100">
+    </div>
+
+    <button id="combineBtn">Combine Images</button>
+    <a id="downloadLink" download="combined-image.png">Download Combined Image</a>
+
+    <canvas id="canvas"></canvas>
+    <img id="preview" alt="Preview of combined image">
+
+    <script>
+        document.getElementById('combineBtn').addEventListener('click', () => {
+            const file1 = document.getElementById('file1').files[0];
+            const file2 = document.getElementById('file2').files[0];
+            const orientation = document.querySelector('input[name="orientation"]:checked').value;
+            const alignment = document.getElementById('alignment').value;
+            const textColor = document.getElementById('textColor').value;
+            const fontFamily = document.getElementById('fontFamily').value;
+            const fontSize = document.getElementById('fontSize').value;
+
+            if (!file1 || !file2) {
+                alert('Please upload both images.');
+                return;
+            }
+
+            const img1 = new Image();
+            const img2 = new Image();
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const preview = document.getElementById('preview');
+            const link = document.getElementById('downloadLink');
+
+            img1.onload = () => {
+                img2.onload = () => {
+                    // Calculate target dimensions
+                    const targetWidth = Math.max(img1.width, img2.width);
+                    const targetHeight = Math.max(img1.height, img2.height);
+
+                    // Create temporary canvases to resize the images
+                    const tmpCanvas1 = document.createElement('canvas');
+                    const tmpCanvas2 = document.createElement('canvas');
+
+                    tmpCanvas1.width = targetWidth;
+                    tmpCanvas1.height = targetHeight;
+
+                    tmpCanvas2.width = targetWidth;
+                    tmpCanvas2.height = targetHeight;
+
+                    const tmpCtx1 = tmpCanvas1.getContext('2d');
+                    const tmpCtx2 = tmpCanvas2.getContext('2d');
+
+                    tmpCtx1.drawImage(img1, 0, 0, targetWidth, targetHeight);
+                    tmpCtx2.drawImage(img2, 0, 0, targetWidth, targetHeight);
+
+                    let offset1 = 0;
+                    let offset2 = 0;
+
+                    if (orientation === 'vertical') {
+                        canvas.width = targetWidth;
+                        canvas.height = targetHeight * 2;
+
+                        if (alignment === 'center') {
+                            offset1 = 0;
+                            offset2 = 0;
+                        } else if (alignment === 'end') {
+                            offset1 = 0;
+                            offset2 = 0;
+                        }
+
+                        ctx.drawImage(tmpCanvas1, offset1, 0);
+                        ctx.fillStyle = textColor;
+                        ctx.font = `${fontSize}px ${fontFamily}`;
+                        ctx.fillText("before", offset1 + 10, parseInt(fontSize, 10));  // Text on the first image
+
+                        ctx.drawImage(tmpCanvas2, offset2, targetHeight);
+                        ctx.fillText("after", offset2 + 10, targetHeight + parseInt(fontSize, 10));  // Text on the second image
+                    } else {
+                        canvas.width = targetWidth * 2;
+                        canvas.height = targetHeight;
+
+                        if (alignment === 'center') {
+                            offset1 = 0;
+                            offset2 = 0;
+                        } else if (alignment === 'end') {
+                            offset1 = 0;
+                            offset2 = 0;
+                        }
+
+                        ctx.drawImage(tmpCanvas1, 0, offset1);
+                        ctx.fillStyle = textColor;
+                        ctx.font = `${fontSize}px ${fontFamily}`;
+                        ctx.fillText("before", 10, offset1 + parseInt(fontSize, 10));  // Text on the first image
+
+                        ctx.drawImage(tmpCanvas2, targetWidth, offset2);
+                        ctx.fillText("after", targetWidth + 10, offset2 + parseInt(fontSize, 10));  // Text on the second image
+                    }
+
+                    const dataURL = canvas.toDataURL('image/png');
+                    preview.src = dataURL;  // Show the preview of the combined image
+                    link.href = dataURL;
+                    link.style.display = 'inline';  // Show the download link
+                };
+
+                img2.src = URL.createObjectURL(file2);
+            };
+
+            img1.src = URL.createObjectURL(file1);
+        });
+    </script>
+</body>
+</html>
